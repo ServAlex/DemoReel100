@@ -26,6 +26,7 @@ bool bothButtons_isPressed = false;
 TaskHandle_t core0Task;
 
 void readButtons();
+void secondTask();
 
 void core0TaskCode( void * pvParameters )
 {
@@ -36,6 +37,7 @@ void core0TaskCode( void * pvParameters )
     {
         //delay(10);
         readButtons();
+        secondTask();
     } 
 }
 

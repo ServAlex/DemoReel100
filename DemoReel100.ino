@@ -22,18 +22,19 @@ FASTLED_USING_NAMESPACE
 #warning "Requires FastLED 3.1 or later; check github for latest code."
 #endif
 
-#define DATA_PIN    22
+#define DATA_PIN    27
 //#define CLK_PIN   4
 //#define LED_TYPE    WS2801
 #define LED_TYPE    WS2811
 
 #define COLOR_ORDER GRB
-#define NUM_LEDS    60
+#define NUM_LEDS    30
 CRGB leds[NUM_LEDS];
 
 #define BRIGHTNESS          26
 #define FRAMES_PER_SECOND  (120*2*2)
 
+#define ADC_PIN         34
 
 int vref = 1100;
 
@@ -47,6 +48,17 @@ uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 // List of patterns to cycle through.  Each is defined as a separate function below.
 typedef void (*SimplePatternList[])();
 //SimplePatternList gPatterns = { solidRed, solidGreen, solidBlue};
+
+void runner();
+void rainbow();
+void rainbowWithGlitter();
+void confetti();
+void sinelon();
+void bpm();
+void solidGreen();
+void solidRed();
+void solidBlue();
+void juggle();
 SimplePatternList gPatterns = { runner,solidRed, solidGreen, solidBlue,  rainbow, /*confetti,*/ sinelon, juggle, bpm};
 
 int maxBrightness = 10;
@@ -89,16 +101,21 @@ void button1PresHandler()
   report();
 }
 
-//void bothButtonsPressHandler() {}
+void bothButtonsPressHandler() {}
 
 void report()
 {
+
+  uint16_t v = analogRead(ADC_PIN);
+  float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
+
   clearScreen();
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawString("Pattern " + String(gCurrentPatternNumber+1) + "/" + ARRAY_SIZE(gPatterns), tft.width() / 2, tft.height() / 2 - 30);
-  tft.drawString("Speed " + String(fpsMultiplier) + "/10", tft.width() / 2, tft.height() / 2);
-  tft.drawString("Brghts " + String(brightness+1) + "/10", tft.width() / 2, tft.height() / 2 + 30);
-  tft.fillCircle(35, tft.height()/2-30 + currentMenu*30, 3, TFT_GREEN);
+  tft.drawString("Pattern " + String(gCurrentPatternNumber+1) + "/" + ARRAY_SIZE(gPatterns), tft.width() / 2, tft.height() / 2 - 30-10);
+  tft.drawString("Speed " + String(fpsMultiplier) + "/10", tft.width() / 2, tft.height() / 2-10);
+  tft.drawString("Brghts " + String(brightness+1) + "/10", tft.width() / 2, tft.height() / 2 + 30-10);
+  tft.drawString("Voltage " + String(battery_voltage), tft.width() / 2, tft.height() / 2 + 30-10 + 30);
+  tft.fillCircle(35, tft.height()/2-30 + currentMenu*30-10, 3, TFT_GREEN);
   //tft.drawCircle(35, tft.height()/2-30 + currentMenu*30, 3, TFT_GREEN);
 }
 
@@ -124,7 +141,18 @@ void setup() {
   delay(200); 
 }
 
+uint32_t lastUpdated = 0;
 
+void secondTask()
+{
+  uint32_t time = millis();
+  if(lastUpdated - time > 100)
+  {
+    //report(); 
+    //secondTask();
+    lastUpdated = time;
+  }
+}
   
 void loop()
 {
@@ -136,8 +164,10 @@ void loop()
 
   // do some periodic updates
   EVERY_N_MILLISECONDS( 20 ) { gHue+=fpsMultiplier*2; } // slowly cycle the "base color" through the rainbow
-  EVERY_N_MILLISECONDS( 60 ) { report(); }
+//  EVERY_N_MILLISECONDS( 100 ) { report(); }
 //  EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
+
+
 }
 
 
@@ -236,7 +266,7 @@ int pos = 0;
 void runner()
 {
   fadeToBlackBy( leds, NUM_LEDS, 60);
-  leds[(pos++)%60] = CHSV(0, 0, 255);
+  leds[(pos++)%NUM_LEDS] = CHSV(0, 0, 255);
   
   //int pos = bitsaw8(189, 0, NUM_LEDS-1 );
   //leds[pos] = CHSV(0, 0, 255);
