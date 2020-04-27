@@ -101,7 +101,28 @@ void button1PresHandler()
   report();
 }
 
-void bothButtonsPressHandler() {}
+void buttonUpPresHandler()
+{
+  Serial.println("Up");
+  currentMenu = ++currentMenu%menuCount;
+}
+void buttonDownPresHandler()
+{
+  Serial.println("Down");
+  currentMenu = ++currentMenu%menuCount;
+}
+void buttonLeftPresHandler()
+{
+  Serial.println("Left");
+  currentMenu = ++currentMenu%menuCount;
+}
+void buttonRightPresHandler()
+{
+  Serial.println("Right");
+  currentMenu = ++currentMenu%menuCount;
+}
+
+//void bothButtonsPressHandler() {}
 
 void report()
 {
