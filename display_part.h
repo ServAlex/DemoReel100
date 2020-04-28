@@ -30,7 +30,7 @@ TFT_eSPI tft = TFT_eSPI(135, 240); // Invoke custom library
 void displaySetup()
 {
     tft.init();
-    tft.setRotation(1);
+    tft.setRotation(3);
     tft.fillScreen(TFT_BLACK);
     tft.setTextSize(2);
     //  tft.setTextColor(TFT_WHITE);

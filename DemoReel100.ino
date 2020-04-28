@@ -58,8 +58,9 @@ void bpm();
 void solidGreen();
 void solidRed();
 void solidBlue();
+void solidWhite();
 void juggle();
-SimplePatternList gPatterns = { runner,solidRed, solidGreen, solidBlue,  rainbow, /*confetti,*/ sinelon, juggle, bpm};
+SimplePatternList gPatterns = { runner, solidWhite, solidRed, solidGreen, solidBlue, rainbow, /*confetti,*/ sinelon, juggle, bpm};
 
 int maxBrightness = 10;
 int brightness = 0;
@@ -78,55 +79,62 @@ void button2PresHandler()
 
 uint8_t fpsMultiplier = 1;
 
-void button1PresHandler()
+void cycleOption(int dir)
 {
   switch (currentMenu)
   {
-  case 0:
-    nextPattern();
-    break;
-  case 1:
-    fpsMultiplier = fpsMultiplier % 10 + 1;
-    break;
-  case 2:
-    brightness = ++brightness%maxBrightness;
-    Serial.println(brightness*brightnessMultiplier);
-    FastLED.setBrightness(brightness*brightnessMultiplier + 3);
-    break;
-  
-  default:
-    break;
+    case 0:
+      if(dir==-1)
+        prevPattern();
+      else
+        nextPattern();
+      break;
+    case 1:
+      fpsMultiplier = (fpsMultiplier + 10 - 1 + dir) % 10 + 1;
+      break;
+    case 2:
+      brightness = (brightness + maxBrightness + dir)%maxBrightness;
+      Serial.println(brightness*brightnessMultiplier);
+      FastLED.setBrightness(brightness*brightnessMultiplier + 3);
+      break;
+    
+    default:
+      break;
   }
+}
+
+void button1PresHandler()
+{
+  cycleOption(1);
 //  Serial.println(fpsMultiplier);
   report();
 }
 
 void buttonUpPresHandler()
 {
-  Serial.println("Up");
-  currentMenu = ++currentMenu%menuCount;
+  currentMenu = (--currentMenu+menuCount)%menuCount;
+  report();
 }
 void buttonDownPresHandler()
 {
-  Serial.println("Down");
   currentMenu = ++currentMenu%menuCount;
+  report();
 }
 void buttonLeftPresHandler()
 {
-  Serial.println("Left");
-  currentMenu = ++currentMenu%menuCount;
+  cycleOption(-1);
+  report();
 }
 void buttonRightPresHandler()
 {
-  Serial.println("Right");
-  currentMenu = ++currentMenu%menuCount;
+  cycleOption(1);
+  report();
 }
 
 //void bothButtonsPressHandler() {}
 
 void report()
 {
-
   uint16_t v = analogRead(ADC_PIN);
   float battery_voltage = ((float)v / 4095.0) * 2.0 * 3.3 * (vref / 1000.0);
 
@@ -166,6 +174,7 @@ uint32_t lastUpdated = 0;
 
 void secondTask()
 {
+  /*
   uint32_t time = millis();
   if(lastUpdated - time > 100)
   {
@@ -173,6 +182,7 @@ void secondTask()
     //secondTask();
     lastUpdated = time;
   }
+  */
 }
   
 void loop()
@@ -187,8 +197,6 @@ void loop()
   EVERY_N_MILLISECONDS( 20 ) { gHue+=fpsMultiplier*2; } // slowly cycle the "base color" through the rainbow
 //  EVERY_N_MILLISECONDS( 100 ) { report(); }
 //  EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
-
-
 }
 
 
@@ -198,6 +206,11 @@ void nextPattern()
   gCurrentPatternNumber = (gCurrentPatternNumber + 1) % ARRAY_SIZE( gPatterns);
 }
 
+void prevPattern()
+{
+  // add one to the current pattern number, and wrap around at the end
+  gCurrentPatternNumber = (gCurrentPatternNumber - 1 + ARRAY_SIZE( gPatterns)) % ARRAY_SIZE( gPatterns);
+}
 
 
 
@@ -268,6 +281,14 @@ void solidBlue()
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
   for( int i = 0; i < NUM_LEDS; i++) { //9948
     leds[i] = CRGB(0, 0, 255);
+  }
+}
+
+void solidWhite()
+{
+  // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
+  for( int i = 0; i < NUM_LEDS; i++) { //9948
+    leds[i] = CRGB(255, 255, 255);
   }
 }
 
