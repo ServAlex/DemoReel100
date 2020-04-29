@@ -49,6 +49,7 @@ uint8_t gCurrentPatternNumber = 0; // Index number of which pattern is current
 typedef void (*SimplePatternList[])();
 //SimplePatternList gPatterns = { solidRed, solidGreen, solidBlue};
 
+void blank();
 void runner();
 void rainbow();
 void rainbowWithGlitter();
@@ -60,7 +61,7 @@ void solidRed();
 void solidBlue();
 void solidWhite();
 void juggle();
-SimplePatternList gPatterns = { runner, solidWhite, solidRed, solidGreen, solidBlue, rainbow, /*confetti,*/ sinelon, juggle, bpm};
+SimplePatternList gPatterns = { blank, runner, solidWhite, solidRed, solidGreen, solidBlue, rainbow, /*confetti,*/ sinelon, juggle, bpm};
 
 int maxBrightness = 10;
 int brightness = 0;
@@ -262,6 +263,11 @@ void bpm()
   }
 }
 
+void blank()
+{
+  for(int i=0; i<NUM_LEDS; i++)
+    leds[i] = CHSV(0, 0, 0);
+}
 void solidGreen()
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
@@ -283,7 +289,6 @@ void solidBlue()
     leds[i] = CRGB(0, 0, 255);
   }
 }
-
 void solidWhite()
 {
   // colored stripes pulsing at a defined Beats-Per-Minute (BPM)
@@ -291,6 +296,7 @@ void solidWhite()
     leds[i] = CRGB(255, 255, 255);
   }
 }
+
 
 /// beatsin8 generates an 8-bit sine wave at a given BPM,
 ///           that oscillates within a given range.
@@ -305,6 +311,7 @@ static inline uint8_t bitsaw8( accum88 beats_per_minute, uint8_t lowest = 0, uin
 }
 
 int pos = 0;
+
 void runner()
 {
   fadeToBlackBy( leds, NUM_LEDS, 60);
@@ -313,7 +320,6 @@ void runner()
   //int pos = bitsaw8(189, 0, NUM_LEDS-1 );
   //leds[pos] = CHSV(0, 0, 255);
 }
-
 
 void juggle() {
   // eight colored dots, weaving in and out of sync with each other
