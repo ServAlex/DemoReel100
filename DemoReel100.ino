@@ -52,6 +52,7 @@ typedef void (*SimplePatternList[])();
 void blank();
 void runner();
 void rainbow();
+void fixedRainbow();
 void rainbowWithGlitter();
 void confetti();
 void sinelon();
@@ -60,8 +61,9 @@ void solidGreen();
 void solidRed();
 void solidBlue();
 void solidWhite();
+void solidHue();
 void juggle();
-SimplePatternList gPatterns = { blank, runner, solidWhite, solidRed, solidGreen, solidBlue, rainbow, /*confetti,*/ sinelon, juggle, bpm};
+SimplePatternList gPatterns = { blank, runner, solidWhite, solidHue, solidRed, solidGreen, solidBlue, rainbow, fixedRainbow, /*confetti,*/ sinelon, juggle, bpm};
 
 int maxBrightness = 10;
 int brightness = 0;
@@ -79,6 +81,8 @@ void button2PresHandler()
 }
 
 uint8_t fpsMultiplier = 1;
+uint8_t parameter8 = 0;
+uint8_t continuousUpdate = 0;
 
 void cycleOption(int dir)
 {
@@ -92,6 +96,7 @@ void cycleOption(int dir)
       break;
     case 1:
       fpsMultiplier = (fpsMultiplier + 10 - 1 + dir) % 10 + 1;
+      parameter8 = (parameter8+dir+256)%256;
       break;
     case 2:
       brightness = (brightness + maxBrightness + dir)%maxBrightness;
@@ -123,11 +128,13 @@ void buttonDownPresHandler()
 }
 void buttonLeftPresHandler()
 {
+  //Serial.println("button");
   cycleOption(-1);
   report();
 }
 void buttonRightPresHandler()
 {
+  //Serial.println("button");
   cycleOption(1);
   report();
 }
@@ -141,11 +148,12 @@ void report()
 
   clearScreen();
   tft.setTextColor(TFT_GREEN, TFT_BLACK);
-  tft.drawString("Pattern " + String(gCurrentPatternNumber+1) + "/" + ARRAY_SIZE(gPatterns), tft.width() / 2, tft.height() / 2 - 30-10);
-  tft.drawString("Speed " + String(fpsMultiplier) + "/10", tft.width() / 2, tft.height() / 2-10);
+  tft.drawString(currentPatternName() + " " + String(gCurrentPatternNumber+1) + "/" + ARRAY_SIZE(gPatterns), tft.width() / 2, tft.height() / 2 - 30-10);
+  //tft.drawString("Speed " + String(fpsMultiplier) + "/10", tft.width() / 2, tft.height() / 2-10);
+  tft.drawString(parameterNameForCurrentPattern() + " " + String(parameter8), tft.width() / 2, tft.height() / 2-10);
   tft.drawString("Brghts " + String(brightness+1) + "/10", tft.width() / 2, tft.height() / 2 + 30-10);
   tft.drawString("Voltage " + String(battery_voltage), tft.width() / 2, tft.height() / 2 + 30-10 + 30);
-  tft.fillCircle(35, tft.height()/2-30 + currentMenu*30-10, 3, TFT_GREEN);
+  tft.fillCircle(5, tft.height()/2-30 + currentMenu*30-10, 3, TFT_GREEN);
   //tft.drawCircle(35, tft.height()/2-30 + currentMenu*30, 3, TFT_GREEN);
 }
 
@@ -191,11 +199,12 @@ void loop()
   gPatterns[gCurrentPatternNumber]();
 
   FastLED.show();  
-  FastLED.delay(1000/(30*fpsMultiplier)); 
+  FastLED.delay(1000/(60)); 
+  //FastLED.delay(1000/(30*fpsMultiplier)); 
   //FastLED.delay(1000/(FRAMES_PER_SECOND)); 
 
   // do some periodic updates
-  EVERY_N_MILLISECONDS( 20 ) { gHue+=fpsMultiplier*2; } // slowly cycle the "base color" through the rainbow
+  EVERY_N_MILLISECONDS( 20 ) { gHue+=parameter8/20; } // slowly cycle the "base color" through the rainbow
 //  EVERY_N_MILLISECONDS( 100 ) { report(); }
 //  EVERY_N_SECONDS( 10 ) { nextPattern(); } // change patterns periodically
 }
@@ -213,13 +222,72 @@ void prevPattern()
   gCurrentPatternNumber = (gCurrentPatternNumber - 1 + ARRAY_SIZE( gPatterns)) % ARRAY_SIZE( gPatterns);
 }
 
+/*
+blank, runner, solidWhite, solidHue, solidRed, solidGreen, solidBlue, rainbow, sinelon, juggle, bpm
+blank, solidWhite, solidRed, solidGreen, solidBlue
+runner, solidHue, rainbow, confetti, sinelon, juggle, bpm
+*/
+String parameterNameForCurrentPattern()
+{
+  if(gPatterns[gCurrentPatternNumber] == runner)
+    return "Speed";
+  if(gPatterns[gCurrentPatternNumber] == rainbow)
+    return "Speed";
+  if(gPatterns[gCurrentPatternNumber] == fixedRainbow)
+    return "Hue";
+  //if(gPatterns[gCurrentPatternNumber] == rainbow)
+  //  return "Hue delta";
+  if(gPatterns[gCurrentPatternNumber] == solidHue)
+    return "Hue";
+  if(gPatterns[gCurrentPatternNumber] == sinelon)
+    return "Hue delta";
+  if(gPatterns[gCurrentPatternNumber] == bpm)
+    return "Hue delta";
+/*
+  if(gPatterns[gCurrentPatternNumber] == )
+    return "";
+*/
+  return "No param";
+}
 
-
+String currentPatternName()
+{
+  if(gPatterns[gCurrentPatternNumber] == solidHue)
+    return "Hue";
+  if(gPatterns[gCurrentPatternNumber] == solidRed)
+    return "Red";
+  if(gPatterns[gCurrentPatternNumber] == solidGreen)
+    return "Green";
+  if(gPatterns[gCurrentPatternNumber] == solidBlue)
+    return "Blue";
+  if(gPatterns[gCurrentPatternNumber] == rainbow)
+    return "Rainbow";
+  if(gPatterns[gCurrentPatternNumber] == fixedRainbow)
+    return "Fix Rainbow";
+  if(gPatterns[gCurrentPatternNumber] == sinelon)
+    return "Sinelon";
+  if(gPatterns[gCurrentPatternNumber] == juggle)
+    return "Juggle";
+  if(gPatterns[gCurrentPatternNumber] == bpm)
+    return "BPM";
+  if(gPatterns[gCurrentPatternNumber] == solidWhite)
+    return "White";
+  if(gPatterns[gCurrentPatternNumber] == runner)
+    return "Runner";
+  if(gPatterns[gCurrentPatternNumber] == blank)
+    return "None";
+  return "";
+}
 
 void rainbow() 
 {
   // FastLED's built-in rainbow generator
   fill_rainbow( leds, NUM_LEDS, gHue, 7);
+}
+
+void fixedRainbow() 
+{
+  fill_rainbow( leds, NUM_LEDS, parameter8, 7);
 }
 
 void rainbowWithGlitter() 
@@ -296,7 +364,11 @@ void solidWhite()
     leds[i] = CRGB(255, 255, 255);
   }
 }
-
+void solidHue()
+{
+  for( int i = 0; i < NUM_LEDS; i++) 
+    leds[i] = CHSV(parameter8, 255, 255);
+}
 
 /// beatsin8 generates an 8-bit sine wave at a given BPM,
 ///           that oscillates within a given range.
