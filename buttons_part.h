@@ -6,11 +6,15 @@
 
 int repeatStart = 1000;
 int repeatPeriod = 10;
+int resetPeriod = 10;
 
 int pins[but_count] = {0, 35, 25, 26, 12, 13};
 long pressStartedTime[but_count] = {0};
 long lastRepeatedTime[but_count] = {0};
-bool isPressed[but_count] = {false, false, false, false, false, false};
+long releasedTime[but_count] = {0};
+//bool isPressed2[but_count] = {false, false, false, false, false, false};
+
+bool buttonIsInPressedState[but_count] = {false, false, false, false, false, false};
 
 // task
 TaskHandle_t core0Task;
@@ -58,14 +62,13 @@ void buttonsSetup()
         pinMode(pins[i], INPUT_PULLUP);
 
     xTaskCreatePinnedToCore(
-                        core0TaskCode,   // Task function.
-                        "core0Task",     // name of task.
-                        10000,       // Stack size of task 
-                        NULL,        // parameter of the task
-                        0,           // priority of the task 
-                        &core0Task,      // Task handle to keep track of created task 
-                        0);          // pin task to core 0 
-
+                        core0TaskCode,      // Task function.
+                        "core0Task",        // name of task.
+                        10000,              // Stack size of task 
+                        NULL,               // parameter of the task
+                        0,                  // priority of the task 
+                        &core0Task,         // Task handle to keep track of created task 
+                        0);                 // pin task to core 0 
 }
 
 void readButtons()
@@ -76,38 +79,61 @@ void readButtons()
     for(int i = 0; i<but_count; i++)
         vals[i] = digitalRead(pins[i]);
 
-    bool pressHappened[but_count] = {0};
-    for(int i = 0; i<but_count; i++)
-    {
-        pressHappened[i] = false;
+    vals[0] = HIGH;
 
+    bool needToFireEvent[but_count] = {false, false, false, false, false, false};
+
+    for(int i = 0; i < but_count; i++)
+    {
         if (vals[i] != HIGH) 
         {
-            // button pressed
-            if(isPressed[i])
+            // pressed
+            if(buttonIsInPressedState[i] || (time - releasedTime[i] < resetPeriod))
             {
-                // been pressed before
+                // been pressed before, or didn't release for long enough time
+                buttonIsInPressedState[i] = true;;
                 if(time - pressStartedTime[i] > repeatStart && time - lastRepeatedTime[i] > repeatPeriod)
                 {
+                    // it's time to start repeating behaviour and repeat time have come
                     lastRepeatedTime[i] = time;
-                    pressHappened[i] = true;
+                    needToFireEvent[i] = true;
+                    //Serial.println("repeated " + String(i));
                 }
             }
             else
             {
                 // pressed for the first time
-                isPressed[i] = true;
+                buttonIsInPressedState[i] = true;
                 pressStartedTime[i] = time;
                 lastRepeatedTime[i] = 0;
-                pressHappened[i] = true;
+                releasedTime[i] = 0;
+                needToFireEvent[i] = true;
+                //Serial.println("first " + String(i));
             }
         }
         else
         {
-            // button not pressed
-            isPressed[i] = false;
-            pressStartedTime[i] = 0;
-            lastRepeatedTime[i] = 0;
+            // not pressed
+/*
+            if(!buttonIsInPressedState[i])
+            {
+                // already for some time
+                if(isPressed2[i])
+                    Serial.println("not pressed " + String(i));
+                isPressed2[i] = false;
+            }
+            else
+            {
+                // just released
+                isPressed2[i] = true;
+                Serial.println("after last " + String(i));
+                releasedTime[i] = time;
+            }
+*/
+            if(buttonIsInPressedState[i])
+                releasedTime[i] = time;
+
+            buttonIsInPressedState[i] = false;
         }
     }
 
@@ -115,7 +141,7 @@ void readButtons()
     {
         if(i == 0)
             continue;
-        if(pressHappened[i])
+        if(needToFireEvent[i])
             handlers[i]();
     }
 }
