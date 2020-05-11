@@ -63,7 +63,8 @@ void solidBlue();
 void solidWhite();
 void solidHue();
 void juggle();
-SimplePatternList gPatterns = { blank, runner, solidWhite, solidHue, solidRed, solidGreen, solidBlue, rainbow, fixedRainbow, /*confetti,*/ sinelon, juggle, bpm};
+void redBlue();
+SimplePatternList gPatterns = { redBlue, blank, runner, solidWhite, solidHue, solidRed, solidGreen, solidBlue, rainbow, fixedRainbow, /*confetti,*/ sinelon, juggle, bpm};
 
 int maxBrightness = 10;
 int brightness = 0;
@@ -243,6 +244,8 @@ String parameterNameForCurrentPattern()
     return "Hue delta";
   if(gPatterns[gCurrentPatternNumber] == bpm)
     return "Hue delta";
+  if(gPatterns[gCurrentPatternNumber] == redBlue)
+    return "Gap";
 /*
   if(gPatterns[gCurrentPatternNumber] == )
     return "";
@@ -276,6 +279,8 @@ String currentPatternName()
     return "Runner";
   if(gPatterns[gCurrentPatternNumber] == blank)
     return "None";
+  if(gPatterns[gCurrentPatternNumber] == redBlue)
+    return "Red/Blue";
   return "";
 }
 
@@ -368,6 +373,35 @@ void solidHue()
 {
   for( int i = 0; i < NUM_LEDS; i++) 
     leds[i] = CHSV(parameter8, 255, 255);
+}
+
+void redBlue()
+{
+  uint8_t halfNum = NUM_LEDS/2;
+  uint8_t reversedParameter = 255 - parameter8;
+
+  uint8_t lit = (reversedParameter*halfNum)/255;
+  uint8_t partialLighting = (reversedParameter*halfNum)%255;
+
+  for(int i = 0; i < halfNum; i++)
+  {
+    leds[i] = CRGB(255*(i<lit), 0, 0);
+    leds[NUM_LEDS - i - 1] = CRGB(0, 0, 255*(i<lit));
+  }
+
+  if(partialLighting != 0)
+  {
+    leds[lit] = CRGB(correctIntensity(partialLighting), 0, 0);
+    leds[NUM_LEDS - lit - 1] = CRGB(0, 0, correctIntensity(partialLighting));
+  }
+}
+
+uint8_t correctIntensity(uint8_t val)
+{
+  uint8_t min = 0;
+  uint8_t max = 255-100;
+  
+  return (val*(max-min))/255 + min;
 }
 
 /// beatsin8 generates an 8-bit sine wave at a given BPM,
